@@ -18,13 +18,16 @@ LLVM_Libraries_Clang_Refactor := \
 	-lclangToolingRefactoring \
 	-lclang-cpp
 
-CXXFLAGS := -Wall $(shell $(LLVM_Config) --cxxflags)
+PROGNAME := rename-fmt-format
+
+DEFINES := -DPROGNAME=\"$(PROGNAME)\"
+CXXFLAGS := -Wall -O2 $(shell $(LLVM_Config) --cxxflags) $(DEFINES)
 
 LDFLAGS := \
 	$(shell $(LLVM_Config) --ldflags) \
 	-rpath $(shell $(LLVM_Config) --libdir)
 
-rename-fmt-format: main.o
+$(PROGNAME): main.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) \
 		-o $@ $^ \
 		$(LLVM_Libraries_Clang_Refactor) \
@@ -32,4 +35,4 @@ rename-fmt-format: main.o
 		$(shell $(LLVM_Config) --system-libs)
 
 clean:
-	$(RM) main.o rename-fmt-format
+	$(RM) main.o $(PROGNAME)
