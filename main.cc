@@ -1,5 +1,6 @@
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <string>
 
 #include "clang/Frontend/CompilerInstance.h" // For clang::CompilerInstance.
 #include "clang/Frontend/FrontendAction.h" // For clang::SyntaxOnlyAction.
@@ -17,6 +18,7 @@ using std::cerr;
 using std::cout;
 using std::endl;
 using std::make_unique;
+using std::string;
 using std::unique_ptr;
 
 // Apply a custom category to all command-line options so that they are the
@@ -33,6 +35,13 @@ static cl::extrahelp MoreHelp(
 R"~(
 rename-fmt-format transforms fmt::format calls into absl::Substitute calls.
 )~");
+
+static string SourceLocationStr(clang::ASTContext *c, const clang::SourceLocation& s)
+{
+    clang::FullSourceLoc full = c->getFullLoc(s);
+
+    return full.getFileEntry()->getName().str() + ":" + std::to_string(full.getLineNumber());
+}
 
 // All the following is largely based on the tutorial material in
 //  https://s3.amazonaws.com/connect.linaro.org/yvr18/presentations/yvr18-223.pdf
@@ -74,7 +83,6 @@ std::unique_ptr<clang::ASTConsumer> FmtFrontendAction::CreateASTConsumer(
         StringRef file
     )
 {
-    cout << "creating ATS consumer for " << file.str() << endl;
     this->FmtRewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
     return make_unique<FmtASTConsumer>(this->FmtRewriter);
 }
@@ -90,13 +98,15 @@ FmtASTConsumer::FmtASTConsumer(clang::Rewriter &R)
                 callee(
                     functionDecl(
                         hasName("fmt::format")
-                    )
+                    ).bind("callee")
                 )
-        );
+        ).bind("callsite");
 
     this->Matcher.addMatcher(CallSiteMatcher, &this->Callback);
 }
 
+// This method is called when the ASTs for entire translation unit
+// have been parsed. So we can run the matcher now.
 void FmtASTConsumer::HandleTranslationUnit(clang::ASTContext &Context)
 {
     this->Matcher.matchAST(Context);
@@ -104,7 +114,16 @@ void FmtASTConsumer::HandleTranslationUnit(clang::ASTContext &Context)
 
 void FmtMatchCallback::run(const clang::ast_matchers::MatchFinder::MatchResult &Result)
 {
-    cout << PROGNAME << ": " << "found match result" << endl;
+    // ASTContext allows us to find the source location.
+    clang::ASTContext *context = Result.Context;
+
+    // Access the callsite using the ID that we bound in the matcher.
+    const clang::CallExpr *site = Result.Nodes.getNodeAs<clang::CallExpr>("callsite");
+
+    cout << PROGNAME << ": "
+        << "found match "
+        << " at " << SourceLocationStr(context, site->getBeginLoc())
+        << endl;
 }
 
 void FmtMatchCallback::onStartOfTranslationUnit()
