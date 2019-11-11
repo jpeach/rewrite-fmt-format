@@ -1,0 +1,33 @@
+diff --git clang-tools-extra/clang-tidy/abseil/AbseilTidyModule.cpp clang-tools-extra/clang-tidy/abseil/AbseilTidyModule.cpp
+index c70ef9007fb..c619ec1845c 100644
+--- clang-tools-extra/clang-tidy/abseil/AbseilTidyModule.cpp
++++ clang-tools-extra/clang-tidy/abseil/AbseilTidyModule.cpp
+@@ -18,6 +18,7 @@
+ #include "DurationSubtractionCheck.h"
+ #include "DurationUnnecessaryConversionCheck.h"
+ #include "FasterStrsplitDelimiterCheck.h"
++#include "FmtFormatConversionCheck.h"
+ #include "NoInternalDependenciesCheck.h"
+ #include "NoNamespaceCheck.h"
+ #include "RedundantStrcatCallsCheck.h"
+@@ -67,6 +68,8 @@ public:
+         "abseil-time-subtraction");
+     CheckFactories.registerCheck<UpgradeDurationConversionsCheck>(
+         "abseil-upgrade-duration-conversions");
++    CheckFactories.registerCheck<FmtFormatConversionCheck>(
++        "abseil-fmt-format-conversion");
+   }
+ };
+ 
+diff --git clang-tools-extra/clang-tidy/abseil/CMakeLists.txt clang-tools-extra/clang-tidy/abseil/CMakeLists.txt
+index 3f88da6233f..44caac957e1 100644
+--- clang-tools-extra/clang-tidy/abseil/CMakeLists.txt
++++ clang-tools-extra/clang-tidy/abseil/CMakeLists.txt
+@@ -12,6 +12,7 @@ add_clang_library(clangTidyAbseilModule
+   DurationSubtractionCheck.cpp
+   DurationUnnecessaryConversionCheck.cpp
+   FasterStrsplitDelimiterCheck.cpp
++  FmtFormatConversionCheck.cpp
+   NoInternalDependenciesCheck.cpp
+   NoNamespaceCheck.cpp
+   RedundantStrcatCallsCheck.cpp
