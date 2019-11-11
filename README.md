@@ -1,4 +1,14 @@
 
+## Notes
+
+## Dealing with default headers
+
+On macOS in particular, you need to run clang tools with additional
+arguments to ensure that it has access to SDK and toolchain headers
+that are not in the default path for upstream LLVM builds. The
+[clang-extra-args.sh](./clang-extra-args.sh) script pokes the default
+clang to automatically add default header search paths.
+
 ## References
 
 * [Clang Refactoring Engine](https://clang.llvm.org/docs/RefactoringEngine.html)
