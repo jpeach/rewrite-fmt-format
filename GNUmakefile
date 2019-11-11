@@ -1,5 +1,6 @@
 RM_F := rm -rf
 LN_S := ln -sf
+MKDIR_P := mkdir -p
 
 # LLVM release branch to clone.
 LLVM_Branch := release/9.x
@@ -42,13 +43,27 @@ $(PROGNAME): main.o
 		$(shell $(LLVM_Config) --libs) \
 		$(shell $(LLVM_Config) --system-libs)
 
-
 Tidy_Check_Prefix := $(LLVM_Dir)/clang-tools-extra/clang-tidy/abseil
 Tidy_Check_Files := \
 	FmtFormatConversionCheck.cpp \
 	FmtFormatConversionCheck.h
 
 setup: checkout-llvm install-links apply-build-patch
+
+build:
+	cd $(LLVM_Dir)/build && ninja bin/clang-tidy
+
+configure: $(LLVM_Dir)/build/rules.ninja
+$(LLVM_Dir)/build/rules.ninja: $(LLVM_Dir)/build
+	cd $< && cmake -G Ninja ../llvm \
+		-DCMAKE_INSTALL_PREFIX=$(LLVM_Root) \
+		-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" \
+		-DLLVM_BUILD_TESTS=OFF \
+		-DLLVM_BUILD_LLVM_DYLIB=ON \
+		-DBUILD_SHARED_LIBS=ON
+
+$(LLVM_Dir)/build:
+	$(MKDIR_P) $@
 
 checkout-llvm: llvm/README.md
 $(LLVM_Dir)/README.md:
@@ -65,4 +80,8 @@ apply-build-patch: src/build.patch
 	fi
 
 clean:
-	$(RM) main.o $(PROGNAME)
+	[[ -d $(LLVM_Dir)/build ]] && cd $(LLVM_Dir)/build ]] && ninja clean
+	$(RM_F) main.o $(PROGNAME)
+
+mrproper: clean
+	$(RM_F) $(LLVM_Dir)
