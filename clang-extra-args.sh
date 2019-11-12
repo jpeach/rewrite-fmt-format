@@ -1,5 +1,9 @@
 #! /usr/bin/env bash
 
+set -o nounset
+set -o errexit
+set -o pipefail
+
 # Extract the builtin clang header search path from the default
 # clang compiler. The tool will have the defaults from the LLVM
 # build tree, which will not be what we need to compile real code.
