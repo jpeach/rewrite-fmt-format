@@ -51,19 +51,21 @@ Tidy_Check_Files := \
 setup: checkout-llvm install-links apply-build-patch
 
 build:
-	cd $(LLVM_Dir)/build && ninja bin/clang-tidy
+	@cd $(LLVM_Dir)/build && ninja bin/clang-tidy
+	@ln -s $(LLVM_Dir)/build/bin/clang-tidy
 
 configure: $(LLVM_Dir)/build/rules.ninja
 $(LLVM_Dir)/build/rules.ninja: $(LLVM_Dir)/build
 	cd $< && cmake -G Ninja ../llvm \
 		-DCMAKE_INSTALL_PREFIX=$(LLVM_Root) \
+		-DCMAKE_MACOSX_RPATH=YES \
 		-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" \
 		-DLLVM_BUILD_TESTS=OFF \
 		-DLLVM_BUILD_LLVM_DYLIB=ON \
 		-DBUILD_SHARED_LIBS=ON
 
 $(LLVM_Dir)/build:
-	$(MKDIR_P) $@
+	@$(MKDIR_P) $@
 
 checkout-llvm: llvm/README.md
 $(LLVM_Dir)/README.md:
@@ -81,6 +83,7 @@ apply-build-patch: src/build.patch
 
 clean:
 	[[ -d $(LLVM_Dir)/build ]] && cd $(LLVM_Dir)/build ]] && ninja clean
+	[[ -h clang-tidy ]] && $(RM) clang-tidy
 	$(RM_F) main.o $(PROGNAME)
 
 mrproper: clean
