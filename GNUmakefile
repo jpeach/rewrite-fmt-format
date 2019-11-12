@@ -51,12 +51,15 @@ Tidy_Check_Files := \
 setup: checkout-llvm install-links apply-build-patch
 
 build:
-	@cd $(LLVM_Dir)/build && ninja bin/clang-tidy
-	@ln -s $(LLVM_Dir)/build/bin/clang-tidy
+	@cd $(LLVM_Dir)/build && \
+		ninja bin/clang-tidy bin/clang-apply-replacements
+	@[[ -h clang-tidy ]] || $(LN_S) $(LLVM_Dir)/build/bin/clang-tidy
+	@[[ -h clang-apply-replacements ]] || $(LN_S) $(LLVM_Dir)/build/bin/clang-apply-replacements
 
 configure: $(LLVM_Dir)/build/rules.ninja
 $(LLVM_Dir)/build/rules.ninja: $(LLVM_Dir)/build
 	cd $< && cmake -G Ninja ../llvm \
+		-DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_INSTALL_PREFIX=$(LLVM_Root) \
 		-DCMAKE_MACOSX_RPATH=YES \
 		-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" \
