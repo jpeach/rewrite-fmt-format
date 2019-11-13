@@ -12,6 +12,7 @@ clang to automatically add default header search paths.
 ## References
 
 * [Clang Refactoring Engine](https://clang.llvm.org/docs/RefactoringEngine.html)
+* [Clang AST Matcher Reference](https://clang.llvm.org/docs/LibASTMatchersReference.html)
 * [LLVM Doxygen](https://clang.llvm.org/doxygen/index.html)
 
 * [ How to build a C++ processing tool using the Clang libraries](https://s3.amazonaws.com/connect.linaro.org/yvr18/presentations/yvr18-223.pdf) by Peter Smith
