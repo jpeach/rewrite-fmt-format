@@ -48,6 +48,17 @@ Tidy_Check_Files := \
 	FmtFormatConversionCheck.cpp \
 	FmtFormatConversionCheck.h
 
+eclipse:
+	$(MKDIR_P) $@
+	cd $@ && cmake -G "Eclipse CDT4 - Unix Makefiles" ../llvm/llvm \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=$(LLVM_Root) \
+		-DCMAKE_MACOSX_RPATH=YES \
+		-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" \
+		-DLLVM_BUILD_TESTS=OFF \
+		-DLLVM_BUILD_LLVM_DYLIB=ON \
+		-DBUILD_SHARED_LIBS=ON
+
 setup: checkout-llvm install-links apply-build-patch
 
 build:
