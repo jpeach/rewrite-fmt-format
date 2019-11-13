@@ -31,7 +31,6 @@ clang::fixit() {
         $HERE/clang-tidy \
         -extra-arg-before="-D__builtin_ia32_storehps(a,b)" \
         -extra-arg-before="-D__builtin_ia32_storelps(a,b)" \
-        --fix-errors \
         --export-fixes=$out \
         --checks=-*,abseil-fmt-format-conversion \
         $f
