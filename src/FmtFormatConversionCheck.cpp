@@ -45,11 +45,6 @@ void FmtFormatConversionCheck::check(const MatchFinder::MatchResult &Result) {
 
   SourceManager& SM = *Result.SourceManager;
 
-  SourceRange Range = CharSourceRange::getTokenRange(
-      Call->getArg(0)->getBeginLoc(), Call->getArg(0)->getEndLoc()).getAsRange();
-
-  std::string Value = Range.printToString(*Result.SourceManager);
-
   llvm::errs() << "literal is /" << Arg0->getString() << "/\n";
 
   if (!Call->getCallee()->getBeginLoc().isValid()) {
@@ -73,8 +68,6 @@ void FmtFormatConversionCheck::check(const MatchFinder::MatchResult &Result) {
   // avoid rewriting code that is in a macro expansion. However, if
   // we do this, then most of the calls inside gtest test suites will
   // be skipped since they are all in gtest macros.
-
-  // TODO(jpeach): Skip empty strings.
 
   using pos_t = std::string::size_type;
   std::string replacement = Arg0->getString();
@@ -129,38 +122,27 @@ void FmtFormatConversionCheck::check(const MatchFinder::MatchResult &Result) {
     }
   }
 
-  bool needsRaw = false;
-
-  if (replacement.find("\n", 0) != std::string::npos) {
-    needsRaw = true;
-  }
-
   // TODO(jpeach): If this is a string literal with an embedded '\n',
   // then we end up coverting it into a raw string, which sucks.
 
   // When we get a raw string literal, the parser strips the
   // prefix and suffix. Put it back if it looks like we will
   // need it.
-  if (needsRaw) {
+  if (replacement.find("\n", 0) != std::string::npos) {
     replacement = "R\"EOF(" + replacement + ")EOF\"";
   } else {
     replacement = "\"" + replacement + "\"";
   }
 
-  llvm::errs() << "emitting replacement literal is /" << replacement << "/\n";
-
-  // XXX(jpeach): The replacements behave strangely with macro expansions.
-  // The warning output shows the range correctly, but the actual fixit
-  // change is applied to the wrong offsets as though the replacement
-  // range needs adjusting.
-
-  diag(Call->getBeginLoc(), "call 'absl::Substitute' instead of 'fmt::format'")
+  diag(Call->getCallee()->getBeginLoc(), "call 'absl::Substitute' instead of 'fmt::format'")
       << FixItHint::CreateReplacement(
-             CharSourceRange::getTokenRange(Call->getCallee()->getBeginLoc(), Call->getCallee()->getEndLoc()),
-             "absl::Substitute")
-      << FixItHint::CreateReplacement(
-             CharSourceRange::getTokenRange(Arg0->getBeginLoc(), Arg0->getEndLoc()),
-             replacement);
+          SourceRange(Call->getCallee()->getBeginLoc(), Call->getCallee()->getEndLoc()),
+          "absl::Substitute");
+
+  if (replacement != Arg0->getString()) {
+    diag(Arg0->getBeginLoc(), "replace format string tokens")
+        << FixItHint::CreateReplacement(Arg0->getBeginLoc(), replacement);
+  }
 }
 
 }  // namespace abseil
